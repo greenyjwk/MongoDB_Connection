@@ -15,14 +15,11 @@ public class AccessMongo extends JFrame {
 
     JTextField input;
     JTextArea output;
-
     MongoDatabase sampleDB = null;
     MongoClient client = null;
     MongoCollection<Document> collection = null;
     MongoCursor<Document> cursor = null;
-
     WindowListener exitListener = null;
-
     MongoIterable<String> dbList = null;
     MongoIterable<String> collList = null;
 
@@ -41,7 +38,6 @@ public class AccessMongo extends JFrame {
         JButton clear = new JButton("Clear");
 
         input = new JTextField(20);
-
         output = new JTextArea(10, 30);
         JScrollPane spOutput = new JScrollPane(output);
 
@@ -53,7 +49,6 @@ public class AccessMongo extends JFrame {
         northPanel.add(clear);
 
         cont.add(northPanel, BorderLayout.NORTH);
-
         cont.add(spOutput, BorderLayout.CENTER);
 
         connect.addActionListener(new ConnectMongo());
@@ -63,7 +58,6 @@ public class AccessMongo extends JFrame {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         exitListener = new WindowAdapter() {
-
             @Override
             public void windowClosing(WindowEvent e) {
                 int confirm = JOptionPane.showOptionDialog(
@@ -74,7 +68,6 @@ public class AccessMongo extends JFrame {
                 if (confirm == 0) {
                     // Close the Mongo Client
                     client.close();
-
                     System.exit(0);
                 }
             }
@@ -94,10 +87,7 @@ public class AccessMongo extends JFrame {
         AccessMongo runIt = new AccessMongo();
     }
 
-
-
     class ConnectMongo implements ActionListener {
-
         public void actionPerformed (ActionEvent event) {
             //in this section open the connection to MongoDB.
             //You should enter the code to connect to the database here
@@ -105,11 +95,8 @@ public class AccessMongo extends JFrame {
             //    desired collection
 
             client = MongoClients.create("mongodb+srv://Ji:1q2w3e4r5tzxcvb@iste-610-team2.bafxi.mongodb.net/myFirstDatabase?retryWrites=true&w=majority");
-            //   client = MongoClients.create("mongodb://localhost:27017");
 
             output.append("Connection to server completed\n");
-            boolean connSuccess = false;
-            System.out.println("jejkj");
 
             try {
                 // Use try/catch so that you will always close the database (finally)
@@ -117,19 +104,15 @@ public class AccessMongo extends JFrame {
 
                 dbList = client.listDatabaseNames();
                 //Does Database Exist?
-                System.out.println("Here we go");
                 String dbName = "OlympicHistory";
                 if (objectExists(dbList, dbName)) {  //returns true or false
                     System.out.println("\n* Database found\n");
                     sampleDB = client.getDatabase(dbName); //connect to the database
                     System.out.println("\n* Connection to database completed\n");
-                    connSuccess = true;
                 } else {  //db not found
                     System.out.println("\nDATABASE NOT FOUND\n");
                     sampleDB = null; //DB not found
-                    connSuccess = false;
                     client.close();
-//                return connSuccess;
                 }
 
                 collList = sampleDB.listCollectionNames();
@@ -150,7 +133,6 @@ public class AccessMongo extends JFrame {
                 } else {  //collection not found
                     System.out.println("\n* COLLECTION NOT FOUND\n");
                     collection = null;
-                    connSuccess = false;
                     client.close();
                 }
             } catch (Exception e) {
@@ -167,6 +149,7 @@ public class AccessMongo extends JFrame {
     }//class ConnectMongo
 
     class GetMongo implements ActionListener {
+
         public void actionPerformed (ActionEvent event) {
             // In this section you should retrieve the data from the collection
             // and use a cursor to list the data in the output JTextArea
@@ -174,15 +157,16 @@ public class AccessMongo extends JFrame {
             //Normal Find text
             String searchText = input.getText();
             System.out.println(searchText);
-//               cursor = collection.find(eq("fromUser", searchText)).iterator();
+
+//            623903bbadb4ce02b755122d
+            Document query = new Document(  "_id", new ObjectId(searchText) );
+            cursor = collection.find(query).iterator();
 
             int cnt = 0;
-//                String searchText = input.getText();
-            cursor = collection.find().iterator();
-
             while(cursor.hasNext()) {
+                System.out.println(cnt);
                 Document d = cursor.next();
-                output.append(d.getInteger("id") + " " +d.getString("fromUser") + " " + d.getString("text") + "\n");
+                output.append(d.getString("ID") + " " +d.getString("Name") + "\n");
                 output.append("The count is " + cnt + "\n");
                 cnt = cnt+1;
             }
@@ -199,15 +183,8 @@ public class AccessMongo extends JFrame {
 //Set counter and print results (cursor)
 //            int cnt = 0;
 
-            while(cursor.hasNext()) {
-                Document d = cursor.next();
-                //output.append(d.toJson() + "\n");
-                output.append(d.getInteger("id") + " " +d.getString("fromUser") + " " + d.getString("text") + "\n");
-                cnt++;
-            }
-            System.out.println("Finish!!!!!!3");
             output.append("The count is " + cnt + "\n");
-            System.out.println("Finish!!!!!!4");
+
         }//actionPerformed
     }//class GetMongo
 
