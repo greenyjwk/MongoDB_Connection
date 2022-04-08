@@ -7,6 +7,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 //Mongo Imports
+import com.mongodb.BasicDBObject;
 import com.mongodb.client.*;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -19,6 +20,8 @@ public class AccessMongo extends JFrame {
     MongoClient client = null;
     MongoCollection<Document> collection = null;
     MongoCursor<Document> cursor = null;
+    MongoCursor<Document> cursor2 = null;
+
     WindowListener exitListener = null;
     MongoIterable<String> dbList = null;
     MongoIterable<String> collList = null;
@@ -89,13 +92,8 @@ public class AccessMongo extends JFrame {
 
     class ConnectMongo implements ActionListener {
         public void actionPerformed (ActionEvent event) {
-            //in this section open the connection to MongoDB.
-            //You should enter the code to connect to the database here
-            //Remember to connect to MongoDB, connect to the database and connect to the
-            //    desired collection
 
             client = MongoClients.create("mongodb+srv://Ji:1q2w3e4r5tzxcvb@iste-610-team2.bafxi.mongodb.net/myFirstDatabase?retryWrites=true&w=majority");
-
             output.append("Connection to server completed\n");
 
             try {
@@ -122,14 +120,7 @@ public class AccessMongo extends JFrame {
                 if (objectExists(collList, colName)) {  //returns true or false
                     System.out.println("\n* Collection found\n");
                     collection = sampleDB.getCollection(colName);
-
-                    // sample query
-                    Document query = new Document(  "_id", new ObjectId("623903bbadb4ce02b755122d") );
-                    Document result = collection.find(query).iterator().next();
-
-                    System.out.println("Query Result: " + result);
                     System.out.println("\n* Collection connection completed\n");
-
                 } else {  //collection not found
                     System.out.println("\n* COLLECTION NOT FOUND\n");
                     collection = null;
@@ -159,34 +150,36 @@ public class AccessMongo extends JFrame {
             System.out.println(searchText);
 
 //            623903bbadb4ce02b755122d
-            Document query = new Document(  "_id", new ObjectId(searchText) );
-            cursor = collection.find(query).iterator();
+//            Document query = new Document(  "_id", new ObjectId(searchText) );
+//            cursor = collection.find(query).iterator();
+
+
+            BasicDBObject whereQuery = new BasicDBObject();
+            whereQuery.put("Name", searchText);
+            cursor = collection.find(whereQuery).iterator();
+
+
 
             int cnt = 0;
             while(cursor.hasNext()) {
-                System.out.println(cnt);
+                cnt++;
                 Document d = cursor.next();
                 output.append(d.getString("ID") + " " +d.getString("Name") + "\n");
-                output.append("The count is " + cnt + "\n");
-                cnt = cnt+1;
             }
-
-//Normal Find id numeric value
-            // int searchText = Integer.parseInt(input.getText());
-            // cursor = collection.find(eq("id", searchText)).iterator();
-
-            //Normal Find regex
-//            String searchText = input.getText();
-//            String regexPattern = "^" + searchText + "\\b.*";
-//            cursor = collection.find(regex("text", regexPattern, "i")).iterator();
-
-//Set counter and print results (cursor)
-//            int cnt = 0;
 
             output.append("The count is " + cnt + "\n");
 
+            //Normal Find id numeric value
+            // int searchText = Integer.parseInt(input.getText());
+
+            // Normal Find regex
+            // String searchText = input.getText();
+            // String regexPattern = "^" + searchText + "\\b.*";
+            // cursor = collection.find(regex("text", regexPattern, "i")).iterator();
+
         }//actionPerformed
     }//class GetMongo
+
 
     class ClearMongo implements ActionListener {
         public void actionPerformed (ActionEvent event) {
