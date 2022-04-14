@@ -5,12 +5,16 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.HashSet;
+import java.util.regex.Pattern;
 
 //Mongo Imports
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.*;
 import org.bson.Document;
-import org.bson.types.ObjectId;
+import org.bson.conversions.Bson;
+
+import static com.mongodb.client.model.Filters.regex;
 
 public class AccessMongo extends JFrame {
 
@@ -20,7 +24,6 @@ public class AccessMongo extends JFrame {
     MongoClient client = null;
     MongoCollection<Document> collection = null;
     MongoCursor<Document> cursor = null;
-    MongoCursor<Document> cursor2 = null;
 
     WindowListener exitListener = null;
     MongoIterable<String> dbList = null;
@@ -148,26 +151,33 @@ public class AccessMongo extends JFrame {
             //Normal Find text
             String searchText = input.getText();
             System.out.println(searchText);
+            Bson searchTextBson = regex("text", searchText, "i");
+
+            Pattern p = Pattern.compile(searchText + ".*", Pattern.CASE_INSENSITIVE);
+            BasicDBObject QueryObj = new BasicDBObject("Name", p);
 
 //            623903bbadb4ce02b755122d
 //            Document query = new Document(  "_id", new ObjectId(searchText) );
 //            cursor = collection.find(query).iterator();
 
+//            BasicDBObject QueryObj = new BasicDBObject();
+//            QueryObj.put("Name", searchTextBson);
+//            QueryObj.put("Name", searchText);
+            cursor = collection.find(QueryObj).iterator();
 
-            BasicDBObject whereQuery = new BasicDBObject();
-            whereQuery.put("Name", searchText);
-            cursor = collection.find(whereQuery).iterator();
-
-
-
-            int cnt = 0;
+            HashSet<String> playersId = new HashSet<>();
             while(cursor.hasNext()) {
-                cnt++;
                 Document d = cursor.next();
-                output.append(d.getString("ID") + " " +d.getString("Name") + "\n");
+                if(!playersId.contains(d.getString("ID"))){
+                    playersId.add(d.getString("ID"));
+                    output.append("\n\n");
+                    output.append(d.getString("Name") +"  /  "+  d.getString("NOC") + "  /  " + d.getString("Team") +"\n");
+                    output.append("----- Attendance Games -----" + '\n');
+                }
+                output.append(d.getString("City") + "  " + d.getString("Year") + "  " + d.getString("Games") +"\n");
             }
 
-            output.append("The count is " + cnt + "\n");
+            output.append("Total Attendance Games " + playersId.size() + "\n");
 
             //Normal Find id numeric value
             // int searchText = Integer.parseInt(input.getText());
@@ -178,7 +188,7 @@ public class AccessMongo extends JFrame {
             // cursor = collection.find(regex("text", regexPattern, "i")).iterator();
 
         }//actionPerformed
-    }//class GetMongo
+    }
 
 
     class ClearMongo implements ActionListener {
@@ -186,8 +196,6 @@ public class AccessMongo extends JFrame {
             //in this section open the connection. Should be able to see if it is not null
             // to see if ti is already open
             output.setText("");
-        }//actionPerformed
-    }//class ClearMongo\
-
+        }
+    }
 }
-
