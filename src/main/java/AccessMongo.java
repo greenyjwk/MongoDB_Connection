@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.regex.Pattern;
 
@@ -18,6 +19,11 @@ import static com.mongodb.client.model.Filters.regex;
 
 public class AccessMongo extends JFrame {
 
+
+    
+    ArrayList<String> playersName = new ArrayList<>();
+
+    JPanel northPanel = new JPanel();
     JTextField input;
     JTextArea output;
     MongoDatabase sampleDB = null;
@@ -28,6 +34,9 @@ public class AccessMongo extends JFrame {
     WindowListener exitListener = null;
     MongoIterable<String> dbList = null;
     MongoIterable<String> collList = null;
+    JButton detailInfo;
+    JComboBox<String> cb;
+    JLabel lbl;
 
     public AccessMongo() {
         System.out.println("Hello Mongo");
@@ -39,7 +48,8 @@ public class AccessMongo extends JFrame {
         Container cont = getContentPane();
         cont.setLayout(new BorderLayout() );
 
-        JButton search = new JButton("Search");
+        JButton search = new JButton("General Search");
+        JButton generateNames = new JButton("Generate Names");
         JButton connect = new JButton("Connect");
         JButton clear = new JButton("Clear");
 
@@ -47,16 +57,63 @@ public class AccessMongo extends JFrame {
         output = new JTextArea(10, 30);
         JScrollPane spOutput = new JScrollPane(output);
 
-        JPanel northPanel = new JPanel();
+        northPanel = new JPanel();
         northPanel.setLayout(new FlowLayout());
         northPanel.add(connect);
+
         northPanel.add(input);
+        northPanel.add(generateNames);
         northPanel.add(search);
         northPanel.add(clear);
+
+
+        //--
+
+        lbl = new JLabel("Name List:");
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lbl.setVisible(false);
+        //lbl.setVisible(true); // Not needed
+
+        northPanel.add(lbl);
+
+        //String[] choices = { "ID", "Name", "NOC", "Sex", "Sport" , "Event", "Games"};
+
+
+
+//        String playerList[] = playersName.toArray(new String[playersName.size()]);
+//        cb = new JComboBox<String>(playerList);
+//
+//
+//
+//        cb.setMaximumSize(cb.getPreferredSize()); // added code
+//        cb.setAlignmentX(Component.CENTER_ALIGNMENT);// added code
+//        //cb.setVisible(true); // Not needed
+//        northPanel.add(cb);
+
+
+        String playerList[] = playersName.toArray(new String[playersName.size()]);
+        cb = new JComboBox<String>(playerList);
+        cb.setMaximumSize(cb.getPreferredSize()); // added code
+        cb.setAlignmentX(Component.CENTER_ALIGNMENT);// added code
+        northPanel.add(cb);
+        cb.setVisible(false);
+
+
+        System.out.println("This is iiii " + cb);
+        JButton btn = new JButton("OK");
+        btn.setAlignmentX(Component.CENTER_ALIGNMENT); // added code
+        northPanel.add(btn);
+        northPanel.setVisible(true); // added code
+
+        btn.addActionListener(new dropDown());
+
+
+        //--
 
         cont.add(northPanel, BorderLayout.NORTH);
         cont.add(spOutput, BorderLayout.CENTER);
 
+        generateNames.addActionListener(new GenerateNames());
         connect.addActionListener(new ConnectMongo());
         search.addActionListener(new GetMongo());
         clear.addActionListener(new ClearMongo());
@@ -91,7 +148,60 @@ public class AccessMongo extends JFrame {
         //mongoLogger.setLevel(Level.INFO);
 
         AccessMongo runIt = new AccessMongo();
+
     }
+
+
+    class GenerateNames implements ActionListener {
+
+        public void actionPerformed (ActionEvent event) {
+
+            //Normal Find text
+            String searchText = input.getText();
+
+            Pattern p = Pattern.compile("^\\b" + searchText + ".*", Pattern.CASE_INSENSITIVE);
+            BasicDBObject QueryObj = new BasicDBObject("Name", p);
+
+            cursor = collection.find(QueryObj).iterator();
+
+            playersName = new ArrayList<>();
+
+            HashSet<String> playersId = new HashSet<>();
+            cb.removeAllItems();
+            while(cursor.hasNext()) {
+                Document d = cursor.next();
+                playersName.add( d.getString("Name") );
+                cb.addItem(d.getString("Name"));
+            }
+
+            cb.setVisible(true);
+            lbl.setVisible(true);
+
+
+
+
+        }//actionPerformed
+    }
+
+
+
+
+
+
+    class dropDown implements ActionListener {
+        public void actionPerformed (ActionEvent event) {
+            //in this section open the connection. Should be able to see if it is not null
+            // to see if ti is already open
+            String searchText = input.getText();
+            System.out.println(searchText);
+            String dropdown = cb.getSelectedItem().toString();
+            output.append("---------------------- -------------------" + dropdown);
+            output.append("---------------------- -------------------" + searchText);
+
+        }
+    }
+
+
 
     class ConnectMongo implements ActionListener {
         public void actionPerformed (ActionEvent event) {
@@ -151,10 +261,14 @@ public class AccessMongo extends JFrame {
             //Normal Find text
             String searchText = input.getText();
             System.out.println(searchText);
-            Bson searchTextBson = regex("text", searchText, "i");
 
-            Pattern p = Pattern.compile(searchText + ".*", Pattern.CASE_INSENSITIVE);
+            Pattern p = Pattern.compile("^\\b" + searchText + "\\b" + ".*", Pattern.CASE_INSENSITIVE);
             BasicDBObject QueryObj = new BasicDBObject("Name", p);
+
+//            detailInfo = new JButton("Detail");
+//            output.add(detailInfo);
+//            detailInfo.addActionListener(new detailInfoMongo());
+//            detailInfo.setVisible(true);
 
 //            623903bbadb4ce02b755122d
 //            Document query = new Document(  "_id", new ObjectId(searchText) );
@@ -171,8 +285,15 @@ public class AccessMongo extends JFrame {
                 if(!playersId.contains(d.getString("ID"))){
                     playersId.add(d.getString("ID"));
                     output.append("\n\n");
-                    output.append(d.getString("Name") +"  /  "+  d.getString("NOC") + "  /  " + d.getString("Team") +"\n");
-                    output.append("----- Attendance Games -----" + '\n');
+
+                    output.append(d.getString("Name") +"  /  "+   d.getString("Team") +"\n" + d.getString("NOC")   );
+
+                    detailInfo = new JButton("Detail");
+                    detailInfo.addActionListener(new detailInfoMongo());
+                    detailInfo.setVisible(true);
+                    output.add(detailInfo);
+
+                    output.append(" ----- Attendance Games ----- " + '\n');
                 }
                 output.append(d.getString("City") + "  " + d.getString("Year") + "  " + d.getString("Games") +"\n");
             }
@@ -191,11 +312,62 @@ public class AccessMongo extends JFrame {
     }
 
 
+
+
+
     class ClearMongo implements ActionListener {
         public void actionPerformed (ActionEvent event) {
             //in this section open the connection. Should be able to see if it is not null
             // to see if ti is already open
             output.setText("");
         }
+    }
+
+
+
+
+
+
+
+    class detailInfoMongo implements ActionListener {
+
+        public void actionPerformed (ActionEvent event) {
+            // In this section you should retrieve the data from the collection
+            // and use a cursor to list the data in the output JTextArea
+
+            //Normal Find text
+            String searchText = input.getText();
+            System.out.println(searchText);
+
+            Pattern p = Pattern.compile("^\\b" + searchText + "\\b" + ".*", Pattern.CASE_INSENSITIVE);
+            BasicDBObject QueryObj = new BasicDBObject("Name", p);
+
+//            623903bbadb4ce02b755122d
+//            Document query = new Document(  "_id", new ObjectId(searchText) );
+//            cursor = collection.find(query).iterator();
+
+//            BasicDBObject QueryObj = new BasicDBObject();
+//            QueryObj.put("Name", searchTextBson);
+//            QueryObj.put("Name", searchText);
+            cursor = collection.find(QueryObj).iterator();
+
+            int playersId = 0 ;
+            while(cursor.hasNext()) {
+                Document d = cursor.next();
+                output.append(d.getString("City") + "  " + d.getString("Year") + "  " + d.getString("Games") +"\n");
+                playersId++;
+            }
+
+            output.append("Total Attendance Games " + playersId + "\n");
+
+            //Normal Find id numeric value
+            // int searchText = Integer.parseInt(input.getText());
+
+            // Normal Find regex
+            // String searchText = input.getText();
+            // String regexPattern = "^" + searchText + "\\b.*";
+            // cursor = collection.find(regex("text", regexPattern, "i")).iterator();
+
+        }//actionPerformed
     }
 }
