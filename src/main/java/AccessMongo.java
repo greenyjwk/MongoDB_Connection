@@ -37,6 +37,7 @@ public class AccessMongo extends JFrame {
     JButton detailInfo;
     JComboBox<String> cb;
     JLabel lbl;
+    JButton btn;
 
     public AccessMongo() {
         System.out.println("Hello Mongo");
@@ -100,8 +101,9 @@ public class AccessMongo extends JFrame {
 
 
         System.out.println("This is iiii " + cb);
-        JButton btn = new JButton("OK");
+        btn = new JButton("Submit");
         btn.setAlignmentX(Component.CENTER_ALIGNMENT); // added code
+        btn.setVisible(false);
         northPanel.add(btn);
         northPanel.setVisible(true); // added code
 
@@ -166,16 +168,23 @@ public class AccessMongo extends JFrame {
 
             playersName = new ArrayList<>();
 
-            HashSet<String> playersId = new HashSet<>();
+            HashSet<String> duplicateCheck = new HashSet<>();
             cb.removeAllItems();
             while(cursor.hasNext()) {
                 Document d = cursor.next();
-                playersName.add( d.getString("Name") );
-                cb.addItem(d.getString("Name"));
+                String player = d.getString("Name");
+                playersName.add( player );
+
+                if(!duplicateCheck.contains(player)){
+                    duplicateCheck.add(player);
+                    cb.addItem(d.getString("Name"));
+                }
+
             }
 
             cb.setVisible(true);
             lbl.setVisible(true);
+            btn.setVisible(true);
 
 
 
@@ -192,12 +201,33 @@ public class AccessMongo extends JFrame {
         public void actionPerformed (ActionEvent event) {
             //in this section open the connection. Should be able to see if it is not null
             // to see if ti is already open
-            String searchText = input.getText();
-            System.out.println(searchText);
             String dropdown = cb.getSelectedItem().toString();
-            output.append("---------------------- -------------------" + dropdown);
-            output.append("---------------------- -------------------" + searchText);
 
+            Pattern p = Pattern.compile("^\\b" + dropdown + "\\b" + ".*", Pattern.CASE_INSENSITIVE);
+            BasicDBObject QueryObj = new BasicDBObject("Name", p);
+
+            cursor = collection.find(QueryObj).iterator();
+
+            HashSet<String> playersId = new HashSet<>();
+            while(cursor.hasNext()) {
+                Document d = cursor.next();
+                if(!playersId.contains(d.getString("ID"))){
+                    playersId.add(d.getString("ID"));
+                    output.append("\n\n");
+
+                    output.append(d.getString("Name") +"  /  "+   d.getString("Team") +"\n" + d.getString("NOC")   );
+
+                    detailInfo = new JButton("Detail");
+                    detailInfo.addActionListener(new detailInfoMongo());
+                    detailInfo.setVisible(true);
+                    output.add(detailInfo);
+
+                    output.append(" ----- Attendance Games ----- " + '\n');
+                }
+                output.append(d.getString("City") + "  " + d.getString("Year") + "  " + d.getString("Games") +"\n");
+            }
+
+            output.append("Total Attendance Games " + playersId.size() + "\n");
         }
     }
 
