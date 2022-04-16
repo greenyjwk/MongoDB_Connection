@@ -1,3 +1,20 @@
+import com.mongodb.Block;
+//import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.gridfs.*;
+import com.mongodb.client.gridfs.model.*;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
+import static com.mongodb.client.model.Filters.eq;
+//
+
+
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -20,7 +37,7 @@ import static com.mongodb.client.model.Filters.regex;
 public class AccessMongo extends JFrame {
 
 
-    
+    MongoDatabase sampleDBImage = null;
     ArrayList<String> playersName = new ArrayList<>();
 
     JPanel northPanel = new JPanel();
@@ -50,8 +67,10 @@ public class AccessMongo extends JFrame {
         cont.setLayout(new BorderLayout() );
 
         JButton search = new JButton("General Search");
+        JButton showImage = new JButton("Show Images");
         JButton generateNames = new JButton("Generate Names");
         JButton connect = new JButton("Connect");
+        JButton connectImageDB = new JButton("Connect Image");
         JButton clear = new JButton("Clear");
 
         input = new JTextField(20);
@@ -61,10 +80,13 @@ public class AccessMongo extends JFrame {
         northPanel = new JPanel();
         northPanel.setLayout(new FlowLayout());
         northPanel.add(connect);
+        northPanel.add(connectImageDB);
 
         northPanel.add(input);
         northPanel.add(generateNames);
         northPanel.add(search);
+
+        northPanel.add(showImage);
         northPanel.add(clear);
 
 
@@ -117,6 +139,10 @@ public class AccessMongo extends JFrame {
 
         generateNames.addActionListener(new GenerateNames());
         connect.addActionListener(new ConnectMongo());
+
+        connectImageDB.addActionListener(new ConnectMongoForImage());
+        showImage.addActionListener(new GetMongoImage());
+
         search.addActionListener(new GetMongo());
         clear.addActionListener(new ClearMongo());
 
@@ -186,14 +212,8 @@ public class AccessMongo extends JFrame {
             lbl.setVisible(true);
             btn.setVisible(true);
 
-
-
-
         }//actionPerformed
     }
-
-
-
 
 
 
@@ -231,6 +251,40 @@ public class AccessMongo extends JFrame {
         }
     }
 
+    class ConnectMongoForImage implements ActionListener {
+        public void actionPerformed (ActionEvent event) {
+
+            client = MongoClients.create("mongodb+srv://Ji:1q2w3e4r5tzxcvb@iste-610-team2.bafxi.mongodb.net/myFirstDatabase?retryWrites=true&w=majority");
+            output.append("Connection to server completed\n");
+
+            try {
+                // Use try/catch so that you will always close the database (finally)
+                //Get a List of databases on the server connection
+
+                dbList = client.listDatabaseNames();
+                //Does Database Exist?
+                String dbName = "Image";
+                if (objectExists(dbList, dbName)) {  //returns true or false
+                    System.out.println("\n* Database found\n");
+                    sampleDBImage = client.getDatabase(dbName); //connect to the database
+                    System.out.println("\n* Connection to database completed\n");
+                } else {  //db not found
+                    System.out.println("\nDATABASE NOT FOUND\n");
+                    sampleDBImage = null; //DB not found
+                    client.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            output.append("Collection obtained\n");
+        }//actionPerformed
+
+
+        private boolean objectExists(MongoIterable <String> objectList, String objectName) {
+            for (String name : objectList) if (name.equals(objectName)) return true;
+            return false;
+        }
+    }
 
 
     class ConnectMongo implements ActionListener {
@@ -260,6 +314,7 @@ public class AccessMongo extends JFrame {
 
                 //get the collection
                 String colName = "Olympic";
+                String colImage = "countryFLag";
                 if (objectExists(collList, colName)) {  //returns true or false
                     System.out.println("\n* Collection found\n");
                     collection = sampleDB.getCollection(colName);
@@ -281,6 +336,49 @@ public class AccessMongo extends JFrame {
             return false;
         }
     }//class ConnectMongo
+
+
+    class GetMongoImage implements ActionListener {
+
+        // This is for image
+        private BufferedImage image = null;
+        private JLabel label = new JLabel();
+
+        public void actionPerformed (ActionEvent event) {
+            // In this section you should retrieve the data from the collection
+            // and use a cursor to list the data in the output JTextArea
+
+            //Create instance of GridFS implementation
+//            GridFSBucket gridFs = GridFSBuckets.create(sampleDBImage, "photos");
+            GridFSBucket gridFs = GridFSBuckets.create(sampleDBImage);
+            //Find the image with the name image1 using GridFS API
+
+            try (GridFSDownloadStream downloadStream = gridFs.openDownloadStream("Crotia.png")) {
+                image = ImageIO.read(downloadStream);
+
+                JFrame frame = new JFrame();
+                frame.getContentPane().setLayout(new FlowLayout());
+                frame.getContentPane().add(new JLabel(new ImageIcon(image)));
+                frame.pack();
+                frame.setVisible(true);
+
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            Image displayImg = image.getScaledInstance(750, 500, Image.SCALE_SMOOTH);
+            ImageIcon icon = new ImageIcon(displayImg);
+            label = new JLabel(icon);
+            add(label);
+            label.setVisible(true);
+            //image
+
+        }//actionPerformed
+    }
+
+
 
     class GetMongo implements ActionListener {
 
