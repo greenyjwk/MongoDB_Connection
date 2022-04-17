@@ -81,6 +81,7 @@ public class AccessMongo extends JFrame {
         Container cont = getContentPane();
         cont.setLayout(new BorderLayout());
 
+
         JButton search = new JButton("General Search");
         showImages = new JButton("Country Flag");
         JButton generateNames = new JButton("Generate Names");
@@ -94,9 +95,8 @@ public class AccessMongo extends JFrame {
         label1 = new JLabel("Enter Player Name: ");
 
         inputDistance = new JTextField(5);
-        JButton searchLoc = new JButton("searchLoc");
 
-        String[] cities = {"London", "Paris", "Antwerpen", "Calagary", "Albertville", "Lillehammer", "Berlin", "Seoul", "Beijing", "Tokyo", "Atlanta"};
+        String[] cities = {"London", "Paris", "Antwerpen", "Albertville", "Lillehammer", "Berlin", "Seoul", "Beijing", "Tokyo", "Atlanta"};
         location = new JComboBox<String>(cities);
         location.setMaximumSize(location.getPreferredSize()); // added code
         location.setAlignmentX(Component.CENTER_ALIGNMENT);// added code
@@ -105,10 +105,13 @@ public class AccessMongo extends JFrame {
         input = new JTextField(20);
         output = new JTextArea(10, 50);
         JScrollPane spOutput = new JScrollPane(output);
+        spOutput.setBackground(Color.lightGray);
+        output.setBackground(Color.lightGray);
 
 
         northPanel = new JPanel();
         northPanel.setLayout(new FlowLayout());
+        northPanel.setBackground(Color.PINK);
         //northPanel.add(connect);
         //northPanel.add(connectImageDB);
 
@@ -117,6 +120,7 @@ public class AccessMongo extends JFrame {
         southPanel.add(connect);
         southPanel.add(connectImageDB);
         southPanel.setVisible(true);
+        southPanel.setBackground(Color.PINK);
 
         northPanel.add(label1);
         northPanel.add(input);
@@ -181,7 +185,7 @@ public class AccessMongo extends JFrame {
 
 
         //Comment
-        addComment = new JButton("Add");
+        addComment = new JButton("Add Comment");
         lblCommentInput = new JLabel("Comment: ");
         commentInput = new JTextField(20);
         southPanel.add(lblCommentInput);
