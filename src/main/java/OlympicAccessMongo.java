@@ -1,22 +1,10 @@
-import com.mongodb.Block;
 //import com.mongodb.MongoClient;
-import com.mongodb.DBObject;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.*;
-import com.mongodb.client.gridfs.model.*;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.geojson.Position;
 import org.bson.Document;
-import org.bson.types.ObjectId;
-
 import java.awt.image.BufferedImage;
 import java.io.*;
 
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Updates;
-
-import java.nio.file.Files;
-import java.nio.charset.StandardCharsets;
 //
 
 
@@ -30,19 +18,15 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.regex.Pattern;
 
 //Mongo Imports
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.*;
-import org.bson.Document;
-import org.bson.conversions.Bson;
 
-import static com.mongodb.client.model.Filters.*;
-import static com.mongodb.client.model.Projections.fields;
+        import static com.mongodb.client.model.Projections.fields;
 
-public class AccessMongo extends JFrame {
+public class OlympicAccessMongo extends JFrame {
 
 
     MongoDatabase sampleDBImage = null;
@@ -71,8 +55,24 @@ public class AccessMongo extends JFrame {
     JButton showImages;
     JButton showLocation;
 
-    public AccessMongo() {
-        System.out.println("Hello Mongo");
+    public OlympicAccessMongo() {
+
+        exitListener = new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                int confirm = JOptionPane.showOptionDialog(
+                        null, "Are You Sure to Close Application?",
+                        "Exit Confirmation", JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE, null, null, null);
+
+                if (confirm == 0) {
+                    // Close the Mongo Client
+//                    client.close();
+                    System.exit(0);
+                }
+            }
+        };
+        addWindowListener(exitListener);
 
         setSize(600, 200);
         setLocation(400, 500);
@@ -80,7 +80,6 @@ public class AccessMongo extends JFrame {
 
         Container cont = getContentPane();
         cont.setLayout(new BorderLayout());
-
 
         JButton search = new JButton("General Search");
         showImages = new JButton("Country Flag");
@@ -163,7 +162,6 @@ public class AccessMongo extends JFrame {
         cb.setVisible(false);
 
 
-        System.out.println("This is iiii " + cb);
         btn = new JButton("Submit");
         btn.setAlignmentX(Component.CENTER_ALIGNMENT); // added code
         btn.setVisible(false);
@@ -222,23 +220,8 @@ public class AccessMongo extends JFrame {
 
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        exitListener = new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                int confirm = JOptionPane.showOptionDialog(
-                        null, "Are You Sure to Close Application?",
-                        "Exit Confirmation", JOptionPane.YES_NO_OPTION,
-                        JOptionPane.QUESTION_MESSAGE, null, null, null);
 
-                if (confirm == 0) {
-                    // Close the Mongo Client
-                    client.close();
-                    System.exit(0);
-                }
-            }
-        };
 
-        addWindowListener(exitListener);
         setVisible(true);
     } //AccessMongo
 
@@ -249,7 +232,7 @@ public class AccessMongo extends JFrame {
         //Logger mongoLogger = Logger.getLogger( "org.mongodb.driver" );
         //mongoLogger.setLevel(Level.INFO);
 
-        AccessMongo runIt = new AccessMongo();
+        OlympicAccessMongo runIt = new OlympicAccessMongo();
 
     }
 
@@ -312,12 +295,11 @@ public class AccessMongo extends JFrame {
                 if (!playersId.contains(d.getInteger("ID"))) {
                     if (!playersId.contains(d.getInteger("ID"))) {
                         playersId.add(d.getInteger("ID"));
-                        output.append("\n\n");
 
                         //need to check
                         NOCGlobal = d.getString("Team");
 
-                        output.append(d.getString("Name") + "  /  " + d.getString("Team") + "\n" + d.getString("NOC") + "\n");
+                        output.append(d.getString("Name") + "  /  "  + d.getString("Team") + "  /  "  + d.getString("Sport") + "\n");
                         output.append("The comment is: " + "\n" + d.getString("Comment") + "\n");
 
                         detailInfo = new JButton("Detail");
@@ -327,10 +309,10 @@ public class AccessMongo extends JFrame {
 
                         output.append(" ----- Attendance Games ----- " + '\n');
                     }
-                    output.append(d.getString("City") + "  " + d.getInteger("Year") + "  " + d.getString("Games") + "\n");
+                    output.append(d.getString("City") + " " + d.getString("Games") + " / " + d.getString("Event") + "\n");
                 }
             }
-            output.append("Total Attendance Games " + playersId.size() + "\n");
+            output.append("\n\n\n\n");
         }
     }
 
@@ -338,7 +320,7 @@ public class AccessMongo extends JFrame {
         public void actionPerformed(ActionEvent event) {
 
             client = MongoClients.create("mongodb+srv://Ji:1q2w3e4r5tzxcvb@iste-610-team2.bafxi.mongodb.net/myFirstDatabase?retryWrites=true&w=majority");
-            output.append("Connection to server completed\n");
+            output.append("Connection to image server completed\n");
 
             try {
                 // Use try/catch so that you will always close the database (finally)
@@ -359,7 +341,7 @@ public class AccessMongo extends JFrame {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            output.append("Collection obtained\n");
+            output.append("Image collection obtained\n\n");
         }//actionPerformed
 
 
@@ -374,7 +356,7 @@ public class AccessMongo extends JFrame {
         public void actionPerformed(ActionEvent event) {
 
             client = MongoClients.create("mongodb+srv://Ji:1q2w3e4r5tzxcvb@iste-610-team2.bafxi.mongodb.net/myFirstDatabase?retryWrites=true&w=majority");
-            output.append("Connection to server completed\n");
+            output.append("Connection to mongoDB Atlas completed\n");
 
             try {
                 // Use try/catch so that you will always close the database (finally)
@@ -410,7 +392,7 @@ public class AccessMongo extends JFrame {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            output.append("Collection obtained\n");
+            output.append("Olympic collection obtained\n\n");
         }//actionPerformed
 
 
