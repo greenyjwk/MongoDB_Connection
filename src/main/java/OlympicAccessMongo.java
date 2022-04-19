@@ -1,7 +1,9 @@
 //import com.mongodb.MongoClient;
+
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.*;
 import org.bson.Document;
+
 import java.awt.image.BufferedImage;
 import java.io.*;
 
@@ -24,7 +26,7 @@ import java.util.regex.Pattern;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.*;
 
-        import static com.mongodb.client.model.Projections.fields;
+import static com.mongodb.client.model.Projections.fields;
 
 public class OlympicAccessMongo extends JFrame {
 
@@ -221,7 +223,6 @@ public class OlympicAccessMongo extends JFrame {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
 
-
         setVisible(true);
     } //AccessMongo
 
@@ -293,28 +294,29 @@ public class OlympicAccessMongo extends JFrame {
             while (cursor.hasNext()) {
                 Document d = cursor.next();
                 if (!playersId.contains(d.getInteger("ID"))) {
-                    if (!playersId.contains(d.getInteger("ID"))) {
-                        playersId.add(d.getInteger("ID"));
 
-                        //need to check
-                        NOCGlobal = d.getString("Team");
+                    playersId.add(d.getInteger("ID"));
 
-                        output.append(d.getString("Name") + "  /  "  + d.getString("Team") + "  /  "  + d.getString("Sport") + "\n");
-                        output.append("The comment is: " + "\n" + d.getString("Comment") + "\n");
+                    //need to check
+                    NOCGlobal = d.getString("Team");
 
-                        detailInfo = new JButton("Detail");
-                        detailInfo.addActionListener(new detailInfoMongo());
-                        detailInfo.setVisible(true);
-                        output.add(detailInfo);
+                    output.append(d.getString("Name") + "  /  " + d.getString("Team") + "  /  " + d.getString("Sport") + "\n");
+                    output.append("The comment is: " + "\n" + d.getString("Comment") + "\n");
 
-                        output.append(" ----- Attendance Games ----- " + '\n');
-                    }
-                    output.append(d.getString("City") + " " + d.getString("Games") + " / " + d.getString("Event") + "\n");
+                    detailInfo = new JButton("Detail");
+                    detailInfo.addActionListener(new detailInfoMongo());
+                    detailInfo.setVisible(true);
+                    output.add(detailInfo);
+
+                    output.append(" ----- Attendance Games ----- " + '\n');
                 }
+
+                output.append(d.getString("City") + " " + d.getString("Games") + " / " + d.getString("Event") + "\n");
             }
             output.append("\n\n\n\n");
         }
     }
+
 
     class ConnectMongoForImage implements ActionListener {
         public void actionPerformed(ActionEvent event) {
@@ -433,162 +435,160 @@ public class OlympicAccessMongo extends JFrame {
     }
 
 
+    class GetMongoImage implements ActionListener {
 
+        // This is for image
+        private BufferedImage image = null;
+        private JLabel label = new JLabel();
 
-class GetMongoImage implements ActionListener {
+        public void actionPerformed(ActionEvent event) {
+            // In this section you should retrieve the data from the collection
+            // and use a cursor to list the data in the JTextArea
 
-    // This is for image
-    private BufferedImage image = null;
-    private JLabel label = new JLabel();
-
-    public void actionPerformed(ActionEvent event) {
-        // In this section you should retrieve the data from the collection
-        // and use a cursor to list the data in the JTextArea
-
-        //Create instance of GridFS implementation
+            //Create instance of GridFS implementation
 //            GridFSBucket gridFs = GridFSBuckets.create(sampleDBImage, "photos");
-        GridFSBucket gridFs = GridFSBuckets.create(sampleDBImage);
-        //Find the image with the name image1 using GridFS API
+            GridFSBucket gridFs = GridFSBuckets.create(sampleDBImage);
+            //Find the image with the name image1 using GridFS API
 
-        try (GridFSDownloadStream downloadStream = gridFs.openDownloadStream(NOCGlobal + ".png")) {
-            image = ImageIO.read(downloadStream);
+            try (GridFSDownloadStream downloadStream = gridFs.openDownloadStream(NOCGlobal + ".png")) {
+                image = ImageIO.read(downloadStream);
 
-            JFrame frame = new JFrame();
-            frame.getContentPane().setLayout(new FlowLayout());
-            frame.getContentPane().add(new JLabel(new ImageIcon(image)));
-            frame.pack();
-            frame.setVisible(true);
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Image displayImg = image.getScaledInstance(750, 500, Image.SCALE_SMOOTH);
-        ImageIcon icon = new ImageIcon(displayImg);
-        label = new JLabel(icon);
-        add(label);
-        label.setVisible(true);
-        //image
-
-    }//actionPerformed
-}
+                JFrame frame = new JFrame();
+                frame.getContentPane().setLayout(new FlowLayout());
+                frame.getContentPane().add(new JLabel(new ImageIcon(image)));
+                frame.pack();
+                frame.setVisible(true);
 
 
-class ShowLoc implements ActionListener {
-
-    private BufferedImage image = null;
-    private JLabel label = new JLabel();
-
-    public void actionPerformed(ActionEvent event) {
-        // In this section you should retrieve the data from the collection
-        // and use a cursor to list the data in the output JTextArea
-
-
-        //Normal Find text
-        int searchDistance = Integer.parseInt(inputDistance.getText());
-        System.out.println(searchDistance);
-
-        String cityName = location.getSelectedItem().toString();
-        output.append(cityName + "\n");
-
-        Pattern p = Pattern.compile(cityName);
-        BasicDBObject QueryObj = new BasicDBObject("City", cityName);
-        cursor = collection.find(QueryObj).iterator();
-
-        double cityLatitude = 0;
-        double citylongitude = 0;
-
-
-        while (cursor.hasNext()) {
-            Document d = cursor.next();
-            cityLatitude = d.getDouble("latitude");
-            citylongitude = d.getDouble("longitude");
-            String playerName = d.getString("Name");
-            output.append(playerName + "\n");
-        }
-        output.append(String.valueOf(cityLatitude) + "\n");
-        output.append(String.valueOf(citylongitude));
-
-
-        BasicDBObject criteria = new BasicDBObject("$near", new double[]{citylongitude, cityLatitude});
-        criteria.put("$maxDistance", searchDistance);
-        BasicDBObject query2 = new BasicDBObject("loc", criteria);
-        ;
-        cursor1 = collection.find(query2).iterator();
-
-        while (cursor1.hasNext()) {
-            Document d = cursor1.next();
-            String playername = d.getString("Name");
-            output.append(playername + "\n");
-        }
-
-
-    }//actionPerformed
-}
-
-
-class GetMongo implements ActionListener {
-
-    private BufferedImage image = null;
-    private JLabel label = new JLabel();
-
-    public void actionPerformed(ActionEvent event) {
-        // In this section you should retrieve the data from the collection
-        // and use a cursor to list the data in the output JTextArea
-
-        //Normal Find text
-        String searchText = input.getText();
-        System.out.println(searchText);
-
-        Pattern p = Pattern.compile("^\\b" + searchText + "\\b" + ".*", Pattern.CASE_INSENSITIVE);
-        BasicDBObject QueryObj = new BasicDBObject("Name", p);
-
-        cursor = collection.find(QueryObj).iterator();
-
-        HashSet<Integer> playersId = new HashSet<>();
-        while (cursor.hasNext()) {
-            Document d = cursor.next();
-            if (!playersId.contains(d.getInteger("ID"))) {
-                playersId.add(d.getInteger("ID"));
-                output.append("\n\n");
-
-                output.append(d.getString("Name") + "  /  " + d.getString("Team") + "\n" + d.getString("NOC") + "\n");
-                detailInfo = new JButton("Detail");
-                detailInfo.addActionListener(new detailInfoMongo());
-                detailInfo.setVisible(true);
-                output.add(detailInfo);
-
-                output.append(" ----- Attendance Games ----- " + '\n');
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            output.append(d.getString("City") + "  " + d.getInteger("Year") + "  " + d.getString("Games") + "\n");
-        }
-        output.append("Total Attendance Games " + playersId.size() + "\n");
-    }//actionPerformed
-}
 
+            Image displayImg = image.getScaledInstance(750, 500, Image.SCALE_SMOOTH);
+            ImageIcon icon = new ImageIcon(displayImg);
+            label = new JLabel(icon);
+            add(label);
+            label.setVisible(true);
+            //image
 
-class ClearMongo implements ActionListener {
-    public void actionPerformed(ActionEvent event) {
-        //in this section open the connection. Should be able to see if it is not null
-        // to see if ti is already open
-        output.setText("");
+        }//actionPerformed
     }
-}
 
 
-class detailInfoMongo implements ActionListener {
+    class ShowLoc implements ActionListener {
 
-    public void actionPerformed(ActionEvent event) {
-        // In this section you should retrieve the data from the collection
-        // and use a cursor to list the data in the output JTextArea
+        private BufferedImage image = null;
+        private JLabel label = new JLabel();
 
-        //Normal Find text
-        String searchText = input.getText();
-        System.out.println(searchText);
+        public void actionPerformed(ActionEvent event) {
+            // In this section you should retrieve the data from the collection
+            // and use a cursor to list the data in the output JTextArea
 
-        Pattern p = Pattern.compile("^\\b" + searchText + "\\b" + ".*", Pattern.CASE_INSENSITIVE);
-        BasicDBObject QueryObj = new BasicDBObject("Name", p);
+
+            //Normal Find text
+            int searchDistance = Integer.parseInt(inputDistance.getText());
+            System.out.println(searchDistance);
+
+            String cityName = location.getSelectedItem().toString();
+            output.append(cityName + "\n");
+
+            Pattern p = Pattern.compile(cityName);
+            BasicDBObject QueryObj = new BasicDBObject("City", cityName);
+            cursor = collection.find(QueryObj).iterator();
+
+            double cityLatitude = 0;
+            double citylongitude = 0;
+
+
+            while (cursor.hasNext()) {
+                Document d = cursor.next();
+                cityLatitude = d.getDouble("latitude");
+                citylongitude = d.getDouble("longitude");
+                String playerName = d.getString("Name");
+                output.append(playerName + "\n");
+            }
+            output.append(String.valueOf(cityLatitude) + "\n");
+            output.append(String.valueOf(citylongitude));
+
+
+            BasicDBObject criteria = new BasicDBObject("$near", new double[]{citylongitude, cityLatitude});
+            criteria.put("$maxDistance", searchDistance);
+            BasicDBObject query2 = new BasicDBObject("loc", criteria);
+            ;
+            cursor1 = collection.find(query2).iterator();
+
+            while (cursor1.hasNext()) {
+                Document d = cursor1.next();
+                String playername = d.getString("Name");
+                output.append(playername + "\n");
+            }
+
+
+        }//actionPerformed
+    }
+
+
+    class GetMongo implements ActionListener {
+
+        private BufferedImage image = null;
+        private JLabel label = new JLabel();
+
+        public void actionPerformed(ActionEvent event) {
+            // In this section you should retrieve the data from the collection
+            // and use a cursor to list the data in the output JTextArea
+
+            //Normal Find text
+            String searchText = input.getText();
+            System.out.println(searchText);
+
+            Pattern p = Pattern.compile("^\\b" + searchText + "\\b" + ".*", Pattern.CASE_INSENSITIVE);
+            BasicDBObject QueryObj = new BasicDBObject("Name", p);
+
+            cursor = collection.find(QueryObj).iterator();
+
+            HashSet<Integer> playersId = new HashSet<>();
+            while (cursor.hasNext()) {
+                Document d = cursor.next();
+                if (!playersId.contains(d.getInteger("ID"))) {
+                    playersId.add(d.getInteger("ID"));
+                    output.append("\n\n");
+
+                    output.append(d.getString("Name") + "  /  " + d.getString("Team") + "  /  " + d.getString("Sport") + "\n");
+                    detailInfo = new JButton("Detail");
+                    detailInfo.addActionListener(new detailInfoMongo());
+                    detailInfo.setVisible(true);
+                    output.add(detailInfo);
+
+                    output.append(" ----- Attendance Games ----- " + '\n');
+                }
+                output.append(d.getString("City") + " " + d.getString("Games") + " / " + d.getString("Event") + "\n");
+            }
+
+        }//actionPerformed
+    }
+
+
+    class ClearMongo implements ActionListener {
+        public void actionPerformed(ActionEvent event) {
+            //in this section open the connection. Should be able to see if it is not null
+            // to see if ti is already open
+            output.setText("");
+        }
+    }
+
+
+    class detailInfoMongo implements ActionListener {
+
+        public void actionPerformed(ActionEvent event) {
+            // In this section you should retrieve the data from the collection
+            // and use a cursor to list the data in the output JTextArea
+
+            //Normal Find text
+            String searchText = input.getText();
+            System.out.println(searchText);
+
+            Pattern p = Pattern.compile("^\\b" + searchText + "\\b" + ".*", Pattern.CASE_INSENSITIVE);
+            BasicDBObject QueryObj = new BasicDBObject("Name", p);
 
 //            623903bbadb4ce02b755122d
 //            Document query = new Document(  "_id", new ObjectId(searchText) );
@@ -597,25 +597,24 @@ class detailInfoMongo implements ActionListener {
 //            BasicDBObject QueryObj = new BasicDBObject();
 //            QueryObj.put("Name", searchTextBson);
 //            QueryObj.put("Name", searchText);
-        cursor = collection.find(QueryObj).iterator();
+            cursor = collection.find(QueryObj).iterator();
 
-        int playersId = 0;
-        while (cursor.hasNext()) {
-            Document d = cursor.next();
-            output.append(d.getString("City") + "  " + d.getInteger("Year") + "  " + d.getString("Games") + "\n");
-            playersId++;
-        }
+            int playersId = 0;
+            while (cursor.hasNext()) {
+                Document d = cursor.next();
+                output.append(d.getString("City") + "  " + d.getInteger("Year") + "  " + d.getString("Games") + "\n");
+                playersId++;
+            }
 
-        output.append("Total Attendance Games " + playersId + "\n");
 
-        //Normal Find id numeric value
-        // int searchText = Integer.parseInt(input.getText());
+            //Normal Find id numeric value
+            // int searchText = Integer.parseInt(input.getText());
 
-        // Normal Find regex
-        // String searchText = input.getText();
-        // String regexPattern = "^" + searchText + "\\b.*";
-        // cursor = collection.find(regex("text", regexPattern, "i")).iterator();
+            // Normal Find regex
+            // String searchText = input.getText();
+            // String regexPattern = "^" + searchText + "\\b.*";
+            // cursor = collection.find(regex("text", regexPattern, "i")).iterator();
 
-    }//actionPerformed
-}
+        }//actionPerformed
+    }
 }
